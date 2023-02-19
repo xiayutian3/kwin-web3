@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.bootcdn.net/ajax/libs/web3/1.8.2/web3.min.js"></script>
+  <title>Document</title>
+</head>
+<body>
+  <h1 id="title"></h1>
+  <input type="text" id="toAccount">
+  <button id="send">send</button>
+
+  <script>
+    var web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+    console.log('web3: ', web3);
+    web3.eth.getBlockNumber().then(res=>console.log('getBlockNumber',res));
+    web3.eth.getChainId().then(res=>console.log('getChainId',res));
+
+    // 获取账号余额
+    web3.eth.getBalance("0x30dCB06009cA7bF591E5046c7eB81279FF88BbDA").then(res=>console.log('getBalance',web3.utils.fromWei(res,"ether") ));
+    // 转账交易
+    // web3.eth.sendTransaction({
+    //     from: '0x4e73Ce8b7bFfD710bc841a2935c14bf237187eB8',
+    //     to: '0x6babAbD2Bf00f74E1Cb793cC308e22756bc00236',
+    //     value: web3.utils.toWei('1',"ether")
+    // })
+    // .then(function(receipt){
+    //   console.log('转账成功: ');
+    // });
+
+
+
+
+
+    // 先授权
+    var title = document.getElementById('title')
+    var toAccount = document.getElementById('toAccount')
+    var send = document.getElementById('send')
+
+    web3.eth.requestAccounts().then(res=>{
+      console.log('授权requestAccounts',res)
+      title.innerHTML = res[0]
+    });
+
+    // 发送交易
+    send.onclick = function(){
+      web3.eth.sendTransaction({
+          from: title.innerHTML,
+          to: toAccount.value,
+          value: web3.utils.toWei('1',"ether")
+      })
+      .then(function(receipt){
+        console.log('转账成功: ');
+      });
+    }
+
+    // 再获取授权账号
+    web3.eth.getAccounts().then(res=>console.log('getAccounts',res));
+  </script>
+</body>
+</html>
