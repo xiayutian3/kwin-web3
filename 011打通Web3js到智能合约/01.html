@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.bootcdn.net/ajax/libs/web3/1.8.2/web3.min.js"></script>
+  <title>Document</title>
+</head>
+
+<body>
+  <input type="text" id="myname">
+  <input type="text" id="myage">
+  <button id="add">add</button>
+
+  <ul id="list"></ul>
+
+  <script type="module">
+    //链接区块链
+    var web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+
+    // 先授权
+    const account = await web3.eth.requestAccounts()
+    console.log('account: ', account);
+
+
+
+    // 连接智能合约程序
+    const studentStorage = await new web3.eth.Contract([
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "studentList",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "age",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_name",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_age",
+            "type": "uint256"
+          }
+        ],
+        "name": "addList",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getList",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "age",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct StudentListStorage.Student[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+      }
+    ], "0x17774277d59E18D9506753B69d94c7794dCd020f")
+    console.log('studentStorage', studentStorage)
+
+    add.onclick = async function () {
+      console.log(myname.value, myage.value)
+      // 因为这个操作会花费钱，所以要知道钱从哪个账号来 ，后面加send
+      await studentStorage.methods.addList(myname.value, myage.value).send({ from: account[0] })
+      // 添加完后，获取列表
+      getList()
+    }
+
+    // 首页进入页面，获取列表
+    getList()
+    async function getList() {
+      // 不改变状态，常量方法使用call
+      // 将在不发送交易的情况下调用该“常量”方法并在 EVM 中执行其智能合约方法。注意此种调用方式无法改变智能合约状态。
+      let res = await studentStorage.methods.getList().call()
+      console.log('res: ', res);
+      list.innerHTML = res.map(item => `
+     <li>${item.id}--${item.name}--${item.age}</li>
+     `).join("")
+    }
+  </script>
+</body>
+
+</html>
