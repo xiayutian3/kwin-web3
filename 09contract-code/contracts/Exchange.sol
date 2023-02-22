@@ -15,6 +15,8 @@ contract Exchange {
   event WithDraw(address token, address user, uint amount, uint balance);
   // 订单事件
   event Order ( uint id,address user,address tokenGet,uint amountGet,address tokenGive,uint amountGive,uint timestamp);
+  // 取消订单事件
+  event Cancel ( uint id,address user,address tokenGet,uint amountGet,address tokenGive,uint amountGive,uint timestamp);
    
 
   // 收费账户地址(收小费用的，手续费)
@@ -45,6 +47,7 @@ contract Exchange {
   // }
   // _Order[] public orderlist;//也可以这种表示形式
   mapping(uint => _Order) public orders; //也可以这种表示形式
+  mapping(uint => bool) public orderCancel; // 取消订单记录
   // 订单数
   uint public orderCount;
 
@@ -117,6 +120,14 @@ contract Exchange {
     emit Order(orderCount, msg.sender, tokenGet,amountGet,tokenGive,amountGive,block.timestamp);
   }
   // cancel取消交易订单
+  function cancelOrder(uint _id) public {
+    _Order memory myorder = orders[_id];
+    require(myorder.id == _id);
+    orderCancel[_id] = true;
+
+    // 触发取消事件
+    emit Cancel(myorder.id, msg.sender,myorder.tokenGet,myorder.amountGet,myorder.tokenGive,myorder.amountGive,block.timestamp);
+  }
   // fillOrder 下单或完成订单
 
 
