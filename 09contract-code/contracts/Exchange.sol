@@ -13,6 +13,9 @@ contract Exchange {
   event Deposit(address token, address user, uint amount, uint balance);
   // 提款事件
   event WithDraw(address token, address user, uint amount, uint balance);
+  // 订单事件
+  event Order ( uint id,address user,address tokenGet,uint amountGet,address tokenGive,uint amountGive,uint timestamp);
+   
 
   // 收费账户地址(收小费用的，手续费)
   address public feeAccount;
@@ -21,6 +24,30 @@ contract Exchange {
 
   // 代币的合约地址=》 用户的地址 =》 用户放在交易所的钱数
   mapping(address => mapping(address => uint)) public tokens;
+
+  // 订单结构体
+  struct _Order {
+    uint id;
+    address user; //订单创建者
+    address tokenGet; //花费的代币地址
+    uint amountGet; //花费的代币的数量
+
+    address tokenGive; //要换成的代币的地址
+    uint amountGive; //要换成的代币的数量
+
+    uint timestamp; //时间戳
+  }
+  // 两种表示形式
+  // [1,2,3]
+  // {
+  //   0:1,
+  //   1:2,
+  // }
+  // _Order[] public orderlist;//也可以这种表示形式
+  mapping(uint => _Order) public orders; //也可以这种表示形式
+  // 订单数
+  uint public orderCount;
+
 
   constructor(address _feeAccount, uint _feePercent){
     feeAccount = _feeAccount;
@@ -74,6 +101,24 @@ contract Exchange {
     emit WithDraw(_token, msg.sender, _amount, tokens[_token][msg.sender]);
 
   }
+
+  // 查询余额某种代币余额
+  function balanceOf(address _token, address _user) public view returns(uint) {
+    return tokens[_token][_user];
+  }
+
+
+
+  // makeOrder创建交易订单
+  function makeOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive) public {
+    orderCount = orderCount.add(1);
+    orders[orderCount] = _Order(orderCount, msg.sender, tokenGet,amountGet,tokenGive,amountGive,block.timestamp);
+    // 触发事件
+    emit Order(orderCount, msg.sender, tokenGet,amountGet,tokenGive,amountGive,block.timestamp);
+  }
+  // cancel取消交易订单
+  // fillOrder 下单或完成订单
+
 
 
 }
