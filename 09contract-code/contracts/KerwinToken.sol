@@ -29,7 +29,7 @@ contract KerwinToken {
   // 转账
   function transfer(address _to, uint256 _value) public returns (bool success){
     require(_to != address(0));
-    _transfer(msg.sender, _to, _value);
+    _transfer(msg.sender, _to, _value); 
     return true;
   }
 
