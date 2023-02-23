@@ -14,7 +14,7 @@ module.exports = async function (deployer) {
 
   await deployer.deploy(Contracts)
   // 后面接的是部署交易所的构造函数的参数
-  await deployer.deploy(Exchange,acounts[0], 10)
+  await deployer.deploy(Exchange,acounts[2], 10)
 }
 
 

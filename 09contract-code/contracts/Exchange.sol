@@ -17,7 +17,9 @@ contract Exchange {
   event Order ( uint id,address user,address tokenGet,uint amountGet,address tokenGive,uint amountGive,uint timestamp);
   // 取消订单事件
   event Cancel ( uint id,address user,address tokenGet,uint amountGet,address tokenGive,uint amountGive,uint timestamp);
-   
+  // 完成订单事件
+  event Trade ( uint id,address user,address tokenGet,uint amountGet,address tokenGive,uint amountGive,uint timestamp);
+
 
   // 收费账户地址(收小费用的，手续费)
   address public feeAccount;
@@ -48,7 +50,8 @@ contract Exchange {
   // _Order[] public orderlist;//也可以这种表示形式
   mapping(uint => _Order) public orders; //也可以这种表示形式
   mapping(uint => bool) public orderCancel; // 取消订单记录
-  // 订单数
+  mapping(uint => bool) public orderFill; // 完成的订单记录
+  // 订单总数
   uint public orderCount;
 
 
@@ -112,12 +115,14 @@ contract Exchange {
 
 
 
-  // makeOrder创建交易订单
-  function makeOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive) public {
+  // makeOrder创建交易订单 (假设  100KWT ==> 1ether)
+  function makeOrder(address _tokenGet, uint _amountGet, address _tokenGive, uint _amountGive) public {
+    require(balanceOf(_tokenGive, msg.sender) >= _amountGive, unicode"创建订单式余额不足"); //判断是否有足够的钱来交易
+
     orderCount = orderCount.add(1);
-    orders[orderCount] = _Order(orderCount, msg.sender, tokenGet,amountGet,tokenGive,amountGive,block.timestamp);
+    orders[orderCount] = _Order(orderCount, msg.sender, _tokenGet,_amountGet,_tokenGive,_amountGive,block.timestamp);
     // 触发事件
-    emit Order(orderCount, msg.sender, tokenGet,amountGet,tokenGive,amountGive,block.timestamp);
+    emit Order(orderCount, msg.sender, _tokenGet,_amountGet,_tokenGive,_amountGive,block.timestamp);
   }
   // cancel取消交易订单
   function cancelOrder(uint _id) public {
@@ -128,8 +133,40 @@ contract Exchange {
     // 触发取消事件
     emit Cancel(myorder.id, msg.sender,myorder.tokenGet,myorder.amountGet,myorder.tokenGive,myorder.amountGive,block.timestamp);
   }
-  // fillOrder 下单或完成订单
+  // fillOrder 下单或完成订单（购买人调用的）
+  function fillOrder(uint _id) public {
+    _Order memory myorder = orders[_id];
+    require(myorder.id == _id);
 
+    // 账户余额 互换 && 收取服务费
+    /**
+        订单流程：
+          小明 -> makeorder
+          100KWT ==> 1ether
+          msg.sender -> fillOrder
+        结果：
+          小明少了1ether,多了100KWT
+          msg.sender少了100KWT,多了1ether
+     */
+    //  小费，手续费 ((100x10)/100) -------- 假设是购买者支付
+      uint feeAmount = myorder.amountGet.mul(feePercent).div(100);
+      require(balanceOf( myorder.tokenGive, myorder.user) >= myorder.amountGive, unicode"创建者余额不足"); //判断订单创建者 是否有足够的钱来交易
+      require(balanceOf( myorder.tokenGet, msg.sender) >= myorder.amountGet.add(feeAmount), unicode"交易者余额不足"); //判断交易者 是否有足够的钱来交易
+
+      //  KWT
+      tokens[myorder.tokenGet][msg.sender] = tokens[myorder.tokenGet][msg.sender].sub(myorder.amountGet.add(feeAmount));
+      tokens[myorder.tokenGet][myorder.user] = tokens[myorder.tokenGet][myorder.user].add(myorder.amountGet);
+      // 交易所的收钱账户 收钱-------- 假设是购买者支付
+      tokens[myorder.tokenGet][feeAccount] = tokens[myorder.tokenGet][feeAccount].add(feeAmount);
+      // ether
+      tokens[myorder.tokenGive][msg.sender] = tokens[myorder.tokenGive][msg.sender].add(myorder.amountGive);
+      tokens[myorder.tokenGive][myorder.user] = tokens[myorder.tokenGive][myorder.user].sub(myorder.amountGive);
+
+    // 订单完成
+    orderFill[_id] = true;
+    // 触发交易完成事件
+    emit Trade(myorder.id,myorder.user,myorder.tokenGet,myorder.amountGet,myorder.tokenGive,myorder.amountGive,block.timestamp);
+  }
 
 
 }
