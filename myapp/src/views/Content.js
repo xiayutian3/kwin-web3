@@ -1,23 +1,32 @@
 import React, { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import Web3 from "web3"
 import tokenjson from '../buildcontract/KerwinToken.json'
 import exchangejson from '../buildcontract/Exchange.json'
+import Balance from './Balance'
+import Order from './Order'
+import { loadBalanceData } from '../redux/slices/balanceSlice'
+import { loadCancelOrderData } from '../redux/slices/orderSlice'
 // console.log('tokenjson: ', tokenjson);
 
 export default function Content() {
+  const dispatch = useDispatch()
+
   useEffect(()=>{
     async function start() {
       // 1.获取连接后的合约
       const web = await initWeb()
-      console.log('web: ', web);
+      // console.log('web: ', web);
       window.web = web //设置成全局对象
       
       // 2.获取资产信息
+      dispatch(loadBalanceData(web))
       // 3.获取订单信息
+      dispatch(loadCancelOrderData(web))
 
     }
     start()
-  },[])
+  },[dispatch])
 
   async function initWeb() {
     //链接区块链
@@ -53,6 +62,9 @@ export default function Content() {
 
 
   return (
-    <div>Content</div>
+    <div style={{padding: "10px"}}>
+      <Balance></Balance>
+      <Order></Order>
+    </div>
   )
 }
