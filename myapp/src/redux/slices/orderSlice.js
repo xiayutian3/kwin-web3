@@ -26,16 +26,59 @@ export const {setCancelOrders,setFillOrders,setAllOrders} = orderSlice.actions
 export default orderSlice.reducer
 
 //异步函数
+// 取消订单事件
 export const loadCancelOrderData = createAsyncThunk(
   "order/fetchCancelOrderData",
   async (data, {dispatch}) => {
     const {web3,account,token,exchange} = data
     // console.log('exchange: ', await exchange.methods.orders(1).call());
+    
+    // 获取之前发生的事件 getPastEvents
     const res = await exchange.getPastEvents("Cancel",{
       fromBlock:0,
       toBlock:"latest"
     })
-    console.log('Cancel: ', res);
+    // console.log('Cancel: ', res);
+    const cancelOrders = res.map(item=>item.returnValues)
+    dispatch(setCancelOrders(cancelOrders))
+
+  }
+)
+
+// 全部订单事件
+export const loadAllOrderData = createAsyncThunk(
+  "order/fetchAllOrderData",
+  async (data, {dispatch}) => {
+    const {web3,account,token,exchange} = data
+    // console.log('exchange: ', await exchange.methods.orders(1).call());
+    
+    // 获取之前发生的事件 getPastEvents
+    const res = await exchange.getPastEvents("Order",{
+      fromBlock:0,
+      toBlock:"latest"
+    })
+    // console.log('Cancel: ', res);
+    const AllOrders = res.map(item=>item.returnValues)
+    dispatch(setAllOrders(AllOrders))
+
+  }
+)
+
+// 完成订单事件
+export const loadFillOrderData = createAsyncThunk(
+  "order/fetchFillOrderData",
+  async (data, {dispatch}) => {
+    const {web3,account,token,exchange} = data
+    // console.log('exchange: ', await exchange.methods.orders(1).call());
+    
+    // 获取之前发生的事件 getPastEvents
+    const res = await exchange.getPastEvents("Trade",{
+      fromBlock:0,
+      toBlock:"latest"
+    })
+    // console.log('Cancel: ', res);
+    const FillOrders = res.map(item=>item.returnValues)
+    dispatch(setFillOrders(FillOrders))
 
   }
 )

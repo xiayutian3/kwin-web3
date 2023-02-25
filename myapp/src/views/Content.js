@@ -6,7 +6,7 @@ import exchangejson from '../buildcontract/Exchange.json'
 import Balance from './Balance'
 import Order from './Order'
 import { loadBalanceData } from '../redux/slices/balanceSlice'
-import { loadCancelOrderData } from '../redux/slices/orderSlice'
+import { loadCancelOrderData,loadAllOrderData,loadFillOrderData } from '../redux/slices/orderSlice'
 // console.log('tokenjson: ', tokenjson);
 
 export default function Content() {
@@ -23,6 +23,22 @@ export default function Content() {
       dispatch(loadBalanceData(web))
       // 3.获取订单信息
       dispatch(loadCancelOrderData(web))
+      dispatch(loadAllOrderData(web))
+      dispatch(loadFillOrderData(web))
+
+      // 4订阅合约事件 (订单创建，取消，完成)
+      // 更好的方式是数据追加
+      web.exchange.events.Order({},(error,event) => {
+        dispatch(loadAllOrderData(web))
+      })
+      web.exchange.events.Cancel({},(error,event) => {
+        dispatch(loadCancelOrderData(web))
+        dispatch(loadBalanceData(web))
+      })
+      web.exchange.events.Trade({},(error,event) => {
+        dispatch(loadFillOrderData(web))
+        dispatch(loadBalanceData(web))
+      })
 
     }
     start()
@@ -34,7 +50,7 @@ export default function Content() {
 
     // 先授权
     const accounts = await web3.eth.requestAccounts()
-    // console.log('account: ', accounts[0]);
+    // console.log('account: ', accounts);
 
      
     //  获取当前的网络id
