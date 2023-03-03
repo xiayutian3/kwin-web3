@@ -70,7 +70,7 @@ contract Exchange {
     emit Deposit(address(0), msg.sender, msg.value, tokens[ETHER][msg.sender]);
   }
 
-  // 存其他货币
+  // 存其他货币 （我调用了这个函数）
   function depositToken(address _token, uint _amount) public {
     require(_token != ETHER); //不等于以太币地址
 
